@@ -45,8 +45,6 @@ const Staff = () => {
       email: values.email,
       password: values.password,
       phone: values.phone,
-      guarantorName: values.guarantorName,
-      guarantorPhone: values.guarantorPhone,
     };
 
     try {
@@ -188,16 +186,7 @@ const Staff = () => {
       dataIndex: "phone",
       key: "phone",
     },
-    {
-      title: "Guarantor Name",
-      dataIndex: "guarantorName",
-      key: "guarantorName",
-    },
-    {
-      title: "Guarantor Phone",
-      dataIndex: "guarantorPhone",
-      key: "guarantorPhone",
-    },
+   
     {
       title: "Email",
       dataIndex: "email",
@@ -332,8 +321,6 @@ const Staff = () => {
             password: "",
             confirmPassword: "",
             phone: "",
-            guarantorName: "",
-            guarantorPhone: "",
           }}
         >
           <Row gutter={16}>
@@ -380,34 +367,6 @@ const Staff = () => {
                 ]}
               >
                 <Input placeholder="Enter phone number" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="guarantorName"
-                label="Guarantor Name"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input the guarantor's name!",
-                  },
-                ]}
-              >
-                <Input placeholder="Enter guarantor name" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="guarantorPhone"
-                label="Guarantor Phone"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input the guarantor's phone!",
-                  },
-                ]}
-              >
-                <Input placeholder="Enter guarantor phone" />
               </Form.Item>
             </Col>
             <Col span={12}>
