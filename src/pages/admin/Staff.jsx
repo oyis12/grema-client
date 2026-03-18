@@ -105,6 +105,7 @@ const Staff = () => {
       cashierId: record._id,
       shopId: user.parentShop,
     };
+    console.log(data)
 
     try {
       const response = await axios.post(staffUrl, data, {
@@ -112,6 +113,7 @@ const Staff = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(response)
       messageApi.success("Staff Assigned Successfully");
 
       fetchUsers(); // Re-fetch after assignment

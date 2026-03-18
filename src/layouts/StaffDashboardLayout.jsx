@@ -291,7 +291,7 @@ const StaffDashboardLayout = () => {
         >
           <h3 className="text-2xl font-semibold">{title}</h3>
           <div className="flex items-center gap-4">
-            <h3 className="text-md font-bold">Hi {user?.firstName}</h3>
+            <h3 className="text-md font-bold capitalize">Hi {user?.firstName}</h3>
             <Time />
             <Button
               onClick={showLogoutModal}

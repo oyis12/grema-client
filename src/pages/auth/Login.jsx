@@ -20,9 +20,9 @@ const Login = () => {
 
       if (response.data.user.role === "super_admin") {
         navigate("/dashboard");
-        console.log(response)
+        // console.log(response)
       } else if (response.data.user.role === "cashier") {
-        console.log(response)
+        // console.log(response)
         navigate("/store");
       }
     } catch (error) {

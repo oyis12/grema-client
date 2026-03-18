@@ -31,6 +31,7 @@ const Store = () => {
       const { data } = await axios.get(`${baseUrl}/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(data)
       setProducts(data.products || []);
     } catch (error) {
       messageApi.error("Failed to fetch products.");
@@ -174,26 +175,25 @@ const Store = () => {
                       <img
                         alt="product"
                         src={product.image || product_default}
-                        className="h-36 object-contain p-4"
+                        className="h-36 object-contain p-2"
                       />
                     }
                   >
+                    <div className="font-bold">
+                     Size: <sapn className="text-red-600!">{product.size}</sapn>
+                    </div>
                     <div className="font-semibold text-sm truncate">
                       {product.title}
                     </div>
 
                     <div className="text-blue-600 font-bold text-sm mt-1">
-                      ₦{product.pricePerSquareMeter?.toLocaleString()}/m²
+                      ₦{product.pricePerSquareMeter?.toLocaleString()}{product?.size.includes("x") ? "" : "/m²"}
                     </div>
 
                     <div
-                      className={`text-xs mt-1 ${
-                        product.quantity < 5
-                          ? "text-red-500"
-                          : "text-green-600"
-                      }`}
+                      className="font-bold"
                     >
-                      Stock: {product.quantity}
+                      Type: {product?.category?.name}
                     </div>
                   </Card>
                 ))}

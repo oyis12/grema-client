@@ -5,6 +5,8 @@ const Receipt = React.forwardRef((props, ref) => {
   const { receiptNumber, receiptData } = props;
   const { user } = useAuthConfig();
 
+  console.log(receiptData)
+
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",

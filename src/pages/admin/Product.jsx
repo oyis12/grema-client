@@ -29,7 +29,7 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import moment from "moment";
 import dayjs from "dayjs";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore"; 
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
 dayjs.extend(isSameOrBefore);
 
@@ -57,66 +57,58 @@ const Product = () => {
     setIsEditing(false);
     setProductBeingEdited(null);
   };
-  
 
- const onFinish = async (values) => {
-  const isEdit = isEditing && productBeingEdited?._id;
+  const onFinish = async (values) => {
+    const isEdit = isEditing && productBeingEdited?._id;
 
-  const productUrl = isEdit
-    ? `${baseUrl}/${productBeingEdited._id}`
-    : `${baseUrl}/add-product`;
+    const productUrl = isEdit
+      ? `${baseUrl}/product/${productBeingEdited._id}`
+      : `${baseUrl}/add-product`;
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append("title", values.title);
-  formData.append("description", values.description);
-  formData.append("pricePerSquareMeter", values.pricePerSquareMeter);
-  formData.append("bulkPrice", values.bulkPrice);
-  formData.append("isTrending", values.isTrending || false);
-  formData.append("isDiscount", values.isDiscount || false);
-  formData.append("discountAmount", values.discountAmount || 0);
-  formData.append("quantity", values.quantity);
-  formData.append(
-    "manufacturingDate",
-    values.manufacturingDate.format("YYYY-MM-DD")
-  );
-  formData.append("category", values.category);
+    formData.append("title", values.title);
+    formData.append("description", values.description);
+    formData.append("pricePerSquareMeter", values.pricePerSquareMeter);
+    formData.append("bulkPrice", values.bulkPrice);
+    formData.append("isTrending", values.isTrending || false);
+    formData.append("isDiscount", values.isDiscount || false);
+    formData.append("discountAmount", values.discountAmount || 0);
+    formData.append("quantity", values.quantity);
+    formData.append("size", values.size);
+ 
+    formData.append("category", values.category);
 
-  if (imageFile) {
-    formData.append("image", imageFile);
-  }
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const method = isEdit ? "patch" : "post";
+      const method = isEdit ? "patch" : "post";
 
-    const res = await axios[method](productUrl, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-console.log('====================================');
-console.log(res);
-console.log('====================================');
-    messageApi.success(
-      `Product ${isEdit ? "updated" : "added"} successfully`
-    );
+      const res = await axios[method](productUrl, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    await fetchProducts();
-    handleCancelProductModal();
-  } catch (error) {
-    console.log('====================================');
-    console.log(error);
-    console.log('====================================');
-    messageApi.error(
-      error.response?.data?.message ||
-        `Error ${isEdit ? "updating" : "adding"} product`
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+      messageApi.success(
+        `Product ${isEdit ? "updated" : "added"} successfully`,
+      );
+
+      await fetchProducts();
+      handleCancelProductModal();
+    } catch (error) {
+      messageApi.error(
+        error.response?.data?.message ||
+          `Error ${isEdit ? "updating" : "adding"} product`,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getCategories = async () => {
     try {
@@ -124,7 +116,7 @@ console.log('====================================');
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(
-        Array.isArray(response.data.categories) ? response.data.categories : []
+        Array.isArray(response.data.categories) ? response.data.categories : [],
       );
     } catch (error) {
       const errorMessage =
@@ -152,20 +144,6 @@ console.log('====================================');
     }
   };
 
-  const filterNonExpired = () => {
-    const now = moment();
-    const nonExpired = products.filter((p) =>
-      moment(p.expiryDate).isAfter(now)
-    );
-    setFilteredProducts(nonExpired);
-  };
-
-  const filterExpired = () => {
-    const now = moment();
-    const expired = products.filter((p) => moment(p.expiryDate).isBefore(now));
-    setFilteredProducts(expired);
-  };
-
   useEffect(() => {
     if (token) {
       getCategories();
@@ -173,16 +151,17 @@ console.log('====================================');
     }
   }, [baseUrl, token]);
 
-const dataSource = filteredProducts.map((product, index) => ({
-  key: product._id || index.toString(),
-  title: product.title,
-  pricePerSquareMeter: product.pricePerSquareMeter,
-  bulkPrice: product.bulkPrice,
-  quantity: product.quantity,
-  manufacturingDate: moment(product.manufacturingDate).format("YYYY-MM-DD"),
-  image: product.image,
-  category: product.category?.name || "N/A",
-}));
+  const dataSource = filteredProducts.map((product, index) => ({
+    key: product._id || index.toString(),
+    title: product.title,
+    pricePerSquareMeter: product.pricePerSquareMeter,
+    bulkPrice: product.bulkPrice,
+    quantity: product.quantity,
+    size: product.size,
+    manufacturingDate: moment(product.manufacturingDate).format("YYYY-MM-DD"),
+    image: product.image,
+    category: product.category?.name || "N/A",
+  }));
 
   const columns = [
     {
@@ -204,9 +183,13 @@ const dataSource = filteredProducts.map((product, index) => ({
     },
     { title: "Product Name", dataIndex: "title", key: "title" },
     { title: "Category", dataIndex: "category", key: "category" },
-    
-    { title: "Price / m²", dataIndex: "pricePerSquareMeter", key: "pricePerSquareMeter" },
-{ title: "Bulk Price", dataIndex: "bulkPrice", key: "bulkPrice" },
+
+    {
+      title: "Price / m²",
+      dataIndex: "pricePerSquareMeter",
+      key: "pricePerSquareMeter",
+    },
+    { title: "Size", dataIndex: "size", key: "size" },
     { title: "Quantity", dataIndex: "quantity", key: "quantity" },
     {
       title: "Maf. Date",
@@ -225,8 +208,8 @@ const dataSource = filteredProducts.map((product, index) => ({
                 key: "view",
                 label: (
                   <NavLink
-                    // to={`/product/${_record.key}`}
-                    // state={{ record: _record }}
+                  // to={`/product/${_record.key}`}
+                  // state={{ record: _record }}
                   >
                     View Product
                   </NavLink>
@@ -236,26 +219,32 @@ const dataSource = filteredProducts.map((product, index) => ({
                 key: "edit",
                 label: (
                   <span
-                  onClick={() => {
-                    const selectedProduct = products.find((p) => p._id === _record.key);
-                    if (selectedProduct) {
-                      setIsEditing(true);
-                      setIsOpen(true);
-                      setProductBeingEdited(selectedProduct);
-                      form.setFieldsValue({
-                        ...selectedProduct,
-                        manufacturingDate: dayjs(selectedProduct.manufacturingDate),
-                        expiryDate: dayjs(selectedProduct.expiryDate),
-                        category: selectedProduct.category?._id || selectedProduct.category,
-                        sizes: selectedProduct.sizes || [],
-                        isTrending: selectedProduct.isTrending || false,
-                        isDiscount: selectedProduct.isDiscount || false,
-                        discountAmount: selectedProduct.discountAmount || 0,
-                      });
-                      setImagePreview(selectedProduct.image || null);
-                    }
-                  }}
-                >
+                    onClick={() => {
+                      const selectedProduct = products.find(
+                        (p) => p._id === _record.key,
+                      );
+                      if (selectedProduct) {
+                        setIsEditing(true);
+                        setIsOpen(true);
+                        setProductBeingEdited(selectedProduct);
+                        form.setFieldsValue({
+                          ...selectedProduct,
+                          manufacturingDate: dayjs(
+                            selectedProduct.manufacturingDate,
+                          ),
+                          expiryDate: dayjs(selectedProduct.expiryDate),
+                          category:
+                            selectedProduct.category?._id ||
+                            selectedProduct.category,
+                          sizes: selectedProduct.sizes || [],
+                          isTrending: selectedProduct.isTrending || false,
+                          isDiscount: selectedProduct.isDiscount || false,
+                          discountAmount: selectedProduct.discountAmount || 0,
+                        });
+                        setImagePreview(selectedProduct.image || null);
+                      }
+                    }}
+                  >
                     Edit
                   </span>
                 ),
@@ -298,7 +287,7 @@ const dataSource = filteredProducts.map((product, index) => ({
 
     const productId = _record.key;
     try {
-      const response = await axios.delete(`${baseUrl}/${productId}`, {
+      const response = await axios.delete(`${baseUrl}/product/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       messageApi.open({
@@ -384,32 +373,7 @@ const dataSource = filteredProducts.map((product, index) => ({
         >
           Add Product <PlusOutlined />
         </Button>
-        {/* <div className="flex gap-2">
-          <Button
-            color="primary"
-            variant="solid"
-            size="midium"
-            onClick={() => setFilteredProducts(products)} // Show all products
-          >
-            All Products
-          </Button>
-          <Button
-            color="green"
-            variant="solid"
-            size="midium"
-            onClick={filterNonExpired}
-          >
-            Non-expired
-          </Button>
-          <Button
-            color="red"
-            variant="solid"
-            size="midium"
-            onClick={filterExpired}
-          >
-            Expired
-          </Button>
-        </div> */}
+      
       </div>
       {loading ? (
         <div className="flex justify-center items-center my-4 h-60 bg-white">
@@ -453,25 +417,7 @@ const dataSource = filteredProducts.map((product, index) => ({
             </Col>
             <Col span={12}>
               <Form.Item
-                label="Description"
-                name="description"
-                className="mb-2"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input product description!",
-                  },
-                ]}
-              >
-                <Input.TextArea placeholder="Enter product description" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label="Price Pre sqm"
+                label="Price / sqm"
                 name="pricePerSquareMeter"
                 className="mb-2"
                 rules={[
@@ -481,78 +427,6 @@ const dataSource = filteredProducts.map((product, index) => ({
                 <Input placeholder="Enter unit price" type="number" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Bulk Price"
-                name="bulkPrice"
-                className="mb-2"
-                rules={[
-                  { required: true, message: "Please input bulk price!" },
-                ]}
-              >
-                <Input placeholder="Enter bulk price" type="number" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label="Sizes"
-                name="sizes"
-                className="mb-2"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select at least one size!",
-                  },
-                ]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="Select sizes"
-                  options={[
-                    { value: "small", label: "Small" },
-                    { value: "medium", label: "Medium" },
-                    { value: "large", label: "Large" },
-                  ]}
-                ></Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Discount Amount"
-                name="discountAmount"
-                className="mb-2"
-              >
-                <Input placeholder="Enter discount amount" type="number" />
-              </Form.Item>
-            </Col>
-            
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label="Is Discount"
-                name="isDiscount"
-                valuePropName="checked"
-                className="!-mb-0"
-              >
-                <Input type="checkbox" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Is Trending"
-                name="isTrending"
-                valuePropName="checked"
-                className="!-mb-0"
-              >
-                <Input type="checkbox" />
-              </Form.Item>
-            </Col>
-            
           </Row>
 
           <Row gutter={[16, 16]}>
@@ -566,126 +440,17 @@ const dataSource = filteredProducts.map((product, index) => ({
                 <Input placeholder="Enter quantity" type="number" />
               </Form.Item>
             </Col>
+
             <Col span={12}>
-              <Form.Item
-                label="Manufacturing Date"
-                name="manufacturingDate"
-                className="mb-2"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select manufacturing date!",
-                  },
-                  {
-                    validator(_, value) {
-                      if (value && value.isAfter(moment(), "day")) {
-                        return Promise.reject(
-                          new Error(
-                            "Manufacturing date cannot be in the future!"
-                          )
-                        );
-                      }
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <DatePicker
-                  format="YYYY-MM-DD"
-                  placeholder="Select manufacturing date"
-                  style={{ width: "100%" }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Form.Item
-                label="Expiry Date"
-                name="expiryDate"
-                className="mb-2"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select expiry date!",
-                  },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      const manufDate = getFieldValue("manufacturingDate");
-
-                      const expiry = value ? dayjs(value) : null;
-                      const manufacturing = manufDate ? dayjs(manufDate) : null;
-                      const today = dayjs();
-
-                      // console.log(
-                      //   "🔍 Expiry Selected:",
-                      //   expiry?.format("YYYY-MM-DD")
-                      // );
-                      // console.log(
-                      //   "🧪 Manufacturing Date:",
-                      //   manufacturing?.format("YYYY-MM-DD")
-                      // );
-                      // console.log("📅 Today:", today.format("YYYY-MM-DD"));
-
-                      if (!expiry) {
-                        return Promise.reject(
-                          new Error("Expiry date is required")
-                        );
-                      }
-
-                      if (expiry.isBefore(today, "day")) {
-                        return Promise.reject(
-                          new Error("Expiry date cannot be in the past!")
-                        );
-                      }
-
-                      if (
-                        manufacturing &&
-                        expiry.isSameOrBefore(manufacturing, "day")
-                      ) {
-                        return Promise.reject(
-                          new Error(
-                            "Expiry date must be after manufacturing date!"
-                          )
-                        );
-                      }
-
-                      return Promise.resolve();
-                    },
-                  }),
-                ]}
-              >
-                <DatePicker
-                  format="YYYY-MM-DD"
-                  placeholder="Select expiry date"
-                  style={{ width: "100%" }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="Category"
-                name="category"
-                className="mb-2"
-                rules={[
-                  { required: true, message: "Please select a category!" },
-                ]}
-              >
-                <Select
-                  placeholder="Select category"
-                  options={categories.map((cat) => ({
-                    value: cat._id,
-                    label: cat.name,
-                  }))}
-                />
+              <Form.Item label="Size" name="size" className="mb-2">
+                <Input placeholder="Enter Size" type="text" />
               </Form.Item>
             </Col>
           </Row>
 
           {/* Image Upload Section */}
           <Row gutter={[16, 16]}>
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item label="Product Image">
                 <Upload
                   accept="image/*"
@@ -725,7 +490,56 @@ const dataSource = filteredProducts.map((product, index) => ({
                 )}
               </Form.Item>
             </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Category"
+                name="category"
+                className="mb-2"
+                rules={[
+                  { required: true, message: "Please select a category!" },
+                ]}
+              >
+                <Select
+                  placeholder="Select category"
+                  options={categories.map((cat) => ({
+                    value: cat._id,
+                    label: cat.name,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
           </Row>
+
+          <Row>
+            <Form.Item
+              label="Is Trending"
+              name="isTrending"
+              valuePropName="checked"
+              className="!-mb-0"
+            >
+              <Input type="checkbox" />
+            </Form.Item>
+          </Row>
+
+          <Col>
+            <Form.Item
+              label="Description"
+              name="description"
+              className="mb-2"
+              rules={[
+                {
+                  required: true,
+                  message: "Please input product description!",
+                },
+              ]}
+            >
+              <Input.TextArea
+                placeholder="Enter product description"
+                style={{ resize: "none" }}
+              />
+            </Form.Item>
+          </Col>
 
           <div className="flex justify-end mt-4">
             <Form.Item>
