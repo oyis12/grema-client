@@ -278,7 +278,7 @@ const StaffDashboardLayout = () => {
           style={{
             position: "fixed",
             top: 0,
-            zIndex: 10,
+            // zIndex: 10,
             width: `calc(100% - ${collapsed ? 80 : 200}px)`,
             left: collapsed ? 80 : 200,
             background: theme.useToken().token.colorBgContainer,

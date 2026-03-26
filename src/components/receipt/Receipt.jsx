@@ -1,11 +1,12 @@
 import React from "react";
 import { useAuthConfig } from "../../context/AppState";
+import { FaInstagram } from "react-icons/fa";
 
 const Receipt = React.forwardRef((props, ref) => {
   const { receiptNumber, receiptData } = props;
   const { user } = useAuthConfig();
 
-  console.log(receiptData)
+  // console.log(receiptData);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -60,8 +61,24 @@ const Receipt = React.forwardRef((props, ref) => {
         >
           {user?.assignedShop?.name?.toUpperCase() || "GREY & GREMA CARPETS"}
         </h1>
-        <p style={{ margin: "5px 0", fontSize: "11px", color: "#64748b" }}>
-          IMPORTERS OF QUALITY PERSIAN RUGS & INTERIOR DECOR
+        <p style={{ fontSize: "11px", color: "#64748b" }}>
+          IMPORTERS OF QUALITY RUGS & INTERIOR DECOR
+        </p>
+        <p style={{ margin: "5px 0", fontSize: "12px" }}>
+          Turkish Carpets | Persian Carpets | Silk Carpet | Chinese Carpets
+          Persian
+        </p>
+        <p style={{ margin: "-5px 0", fontSize: "11px" }}>
+          Plot 1698, Amiun Kano Crescent, Wuse II, Abuja
+        </p>
+        <div className="flex items-center justify-center gap-1">
+          <FaInstagram />
+          <p style={{ margin: "5px 0", fontSize: "11px", color: "#64748b" }}>
+            Greyandgrema_carpets
+          </p>
+        </div>
+        <p style={{ margin: "-5px 0", fontSize: "11px" }}>
+          08184343330, 08130262533, 08033212840
         </p>
         <div
           style={{
@@ -168,7 +185,10 @@ const Receipt = React.forwardRef((props, ref) => {
                     {item.title}
                   </td>
                   <td style={td}>
-                    {item.dimensions?.length}m x {item.dimensions?.width}m
+                    {item.dimensions?.length === 0 &&
+                    item.dimensions?.width === 0
+                      ? "-"
+                      : `${item.dimensions?.length}m x ${item.dimensions?.width}m`}
                   </td>
                   <td style={td}>{totalSqm.toFixed(2)}</td>
                   <td style={td}>{item.quantity}</td>

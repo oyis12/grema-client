@@ -76,7 +76,7 @@ const Product = () => {
     formData.append("discountAmount", values.discountAmount || 0);
     formData.append("quantity", values.quantity);
     formData.append("size", values.size);
- 
+
     formData.append("category", values.category);
 
     if (imageFile) {
@@ -373,7 +373,6 @@ const Product = () => {
         >
           Add Product <PlusOutlined />
         </Button>
-      
       </div>
       {loading ? (
         <div className="flex justify-center items-center my-4 h-60 bg-white">
@@ -442,8 +441,32 @@ const Product = () => {
             </Col>
 
             <Col span={12}>
-              <Form.Item label="Size" name="size" className="mb-2">
-                <Input placeholder="Enter Size" type="text" />
+              <Form.Item
+                label="Size"
+                name="size"
+                className="mb-2"
+                // normalize processes the value every time it changes
+                normalize={(value) => {
+                  if (!value) return value;
+
+                  // 1. Convert to lowercase
+                  // 2. Remove all spaces (removes space even if user hits spacebar)
+                  let cleaned = value.toLowerCase();
+
+                  // 3. Auto-insert "mx" logic (Optional but helpful)
+                  // If user types "2.3" and it doesn't have 'm' yet, make it "2.3mx"
+                  if (/^\d+(\.\d+)?$/.test(cleaned) && cleaned.length >= 3) {
+                    return `${cleaned}mx`;
+                  }
+
+                  return cleaned;
+                }}
+              >
+                <Input
+                  placeholder="e.g. 1.6mx2.3m"
+                  type="text"
+                  className="lowercase"
+                />
               </Form.Item>
             </Col>
           </Row>

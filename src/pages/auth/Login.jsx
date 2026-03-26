@@ -47,7 +47,7 @@ const Login = () => {
         {/* Elegant Overlay */}
         <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-16 text-white">
           <h2 className="text-4xl font-bold mb-4">
-            Premium Rug Management
+           Grey and Grema Carpet
           </h2>
           <p className="text-lg text-gray-200 max-w-md">
             Seamlessly manage rug sales, inventory, and showroom operations

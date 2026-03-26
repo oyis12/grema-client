@@ -24,6 +24,7 @@ const Store = () => {
   const receiptRef = useRef();
   const [searchTerm, setSearchTerm] = useState("");
   const [receiptData, setReceiptData] = useState(null);
+  const [selectedSize, setSelecedSize] = useState(null);
 
   const fetchProducts = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -31,7 +32,7 @@ const Store = () => {
       const { data } = await axios.get(`${baseUrl}/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(data)
+      // console.log(data)
       setProducts(data.products || []);
     } catch (error) {
       messageApi.error("Failed to fetch products.");
@@ -44,8 +45,43 @@ const Store = () => {
     if (token) fetchProducts();
   }, [baseUrl, token]);
 
+  // const handleProductClick = (product) => {
+  //   console.log(product)
+  //   const index = cart.findIndex((item) => item._id === product._id);
+  //   setSelecedSize(product?.size)
+  //   if (index !== -1) {
+  //     const updatedCart = [...cart];
+  //     updatedCart[index].quantity += 1;
+  //     setCart(updatedCart);
+  //   } else {
+  //     setCart([
+  //       ...cart,
+  //       {
+  //         ...product,
+  //         quantity: 1,
+  //         length: 0,
+  //         width: 0,
+  //         negotiatedPrice: product.pricePerSquareMeter,
+  //       },
+  //     ]);
+  //   }
+  // };
+
   const handleProductClick = (product) => {
     const index = cart.findIndex((item) => item._id === product._id);
+
+    // 1. Parse dimensions if they exist (e.g., "1.6m x 2.3m")
+    let initialLength = 0;
+    let initialWidth = 0;
+
+    if (product.size && product.size.includes("x")) {
+      const dimensions = product.size.split("x").map(
+        (dim) => dim.replace(/[^\d.]/g, "").trim(), // Removes 'm' and any non-numeric chars
+      );
+      initialLength = Number(dimensions[0]) || 0;
+      initialWidth = Number(dimensions[1]) || 0;
+    }
+
     if (index !== -1) {
       const updatedCart = [...cart];
       updatedCart[index].quantity += 1;
@@ -56,8 +92,9 @@ const Store = () => {
         {
           ...product,
           quantity: 1,
-          length: 0,
-          width: 0,
+          // 2. Apply parsed dimensions or default to 0
+          length: initialLength,
+          width: initialWidth,
           negotiatedPrice: product.pricePerSquareMeter,
         },
       ]);
@@ -92,7 +129,7 @@ const Store = () => {
       const { data } = await axios.post(
         `${baseUrl}/receipts/preview`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       setReceiptData(data.receipt);
@@ -114,7 +151,7 @@ const Store = () => {
         await axios.post(
           `${baseUrl}/receipts/finalize`,
           { receiptId },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         messageApi.success("Sale completed successfully!");
         fetchProducts(true);
@@ -139,7 +176,6 @@ const Store = () => {
       {contextHolder}
 
       <div className="flex flex-col lg:flex-row gap-6">
-
         {/* Products */}
         <div className="lg:w-2/3 w-full">
           <Input
@@ -159,7 +195,7 @@ const Store = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
               {products
                 .filter((p) =>
-                  p.title.toLowerCase().includes(searchTerm.toLowerCase())
+                  p.title.toLowerCase().includes(searchTerm.toLowerCase()),
                 )
                 .map((product) => (
                   <Card
@@ -179,20 +215,24 @@ const Store = () => {
                       />
                     }
                   >
-                    <div className="font-bold">
-                     Size: <sapn className="text-red-600!">{product.size}</sapn>
-                    </div>
+                    {product?.size === "undefined" ? (
+                      ""
+                    ) : (
+                      <div className="font-bold">
+                        Size:{" "}
+                        <sapn className="text-red-600!">{product.size}</sapn>
+                      </div>
+                    )}
                     <div className="font-semibold text-sm truncate">
                       {product.title}
                     </div>
 
                     <div className="text-blue-600 font-bold text-sm mt-1">
-                      ₦{product.pricePerSquareMeter?.toLocaleString()}{product?.size.includes("x") ? "" : "/m²"}
+                      ₦{product.pricePerSquareMeter?.toLocaleString()}
+                      {product?.size.includes("x") || product.size === "undefined" ? "" : "/m²"}
                     </div>
 
-                    <div
-                      className="font-bold"
-                    >
+                    <div className="font-bold">
                       Type: {product?.category?.name}
                     </div>
                   </Card>
@@ -225,8 +265,10 @@ const Store = () => {
 
             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
               {cart.map((item, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                >
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold truncate w-4/5">
                       {item.title}
@@ -244,6 +286,8 @@ const Store = () => {
                     <Input
                       type="number"
                       size="small"
+                      /* Only readOnly if a valid size exists */
+                      readOnly={item.size && item.size !== "undefined"}
                       value={item.length}
                       onChange={(e) =>
                         updateCartItem(index, "length", e.target.value)
@@ -254,6 +298,8 @@ const Store = () => {
                     <Input
                       type="number"
                       size="small"
+                      /* Only readOnly if a valid size exists */
+                      readOnly={item.size && item.size !== "undefined"}
                       value={item.width}
                       onChange={(e) =>
                         updateCartItem(index, "width", e.target.value)
@@ -266,11 +312,7 @@ const Store = () => {
                       size="small"
                       value={item.negotiatedPrice}
                       onChange={(e) =>
-                        updateCartItem(
-                          index,
-                          "negotiatedPrice",
-                          e.target.value
-                        )
+                        updateCartItem(index, "negotiatedPrice", e.target.value)
                       }
                       placeholder="Rate"
                     />
@@ -284,7 +326,7 @@ const Store = () => {
                           updateCartItem(
                             index,
                             "quantity",
-                            Math.max(1, item.quantity - 1)
+                            Math.max(1, item.quantity - 1),
                           )
                         }
                       >
@@ -351,11 +393,7 @@ const Store = () => {
             cancelText="No"
             onConfirm={handlePrint}
           >
-            <Button
-              type="primary"
-              className="bg-blue-600"
-              loading={loading}
-            >
+            <Button type="primary" className="bg-blue-600" loading={loading}>
               Complete Sale & Print
             </Button>
           </Popconfirm>,
