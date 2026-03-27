@@ -350,8 +350,8 @@ const Store = () => {
                     <span className="text-xs font-bold text-blue-700">
                       ₦
                       {(
-                        item.length *
-                        item.width *
+                        // item.length *
+                        // item.width *
                         item.negotiatedPrice *
                         item.quantity
                       ).toLocaleString()}
