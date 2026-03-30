@@ -78,7 +78,7 @@ const Receipt = React.forwardRef((props, ref) => {
           </p>
         </div>
         <p style={{ margin: "-5px 0", fontSize: "11px" }}>
-          08184343330, 08130262533, 08033212840
+          08184343338, 08130262533, 08033212840
         </p>
         <div
           style={{
@@ -195,7 +195,7 @@ const Receipt = React.forwardRef((props, ref) => {
                   <td style={td}>{rate.toLocaleString()}</td>
                   <td style={{ ...td, textAlign: "right", fontWeight: "bold" }}>
                     {(
-                      item.negotiatedPriceAtSale * item.quantity
+                      item.negotiatedPriceAtSale
                     ).toLocaleString()}
                   </td>
                 </tr>
