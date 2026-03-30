@@ -1,3 +1,5 @@
+
+
 import React from "react";
 import { useAuthConfig } from "../../context/AppState";
 import { FaInstagram } from "react-icons/fa";
@@ -5,8 +7,6 @@ import { FaInstagram } from "react-icons/fa";
 const Receipt = React.forwardRef((props, ref) => {
   const { receiptNumber, receiptData } = props;
   const { user } = useAuthConfig();
-
-  // console.log(receiptData);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -49,7 +49,7 @@ const Receipt = React.forwardRef((props, ref) => {
             zIndex: 0,
           }}
         >
-          {receiptData.shop?.name}
+          {receiptData?.shop?.name || "AUTHENTIC"}
         </h2>
         <h1
           style={{
@@ -66,18 +66,19 @@ const Receipt = React.forwardRef((props, ref) => {
         </p>
         <p style={{ margin: "5px 0", fontSize: "12px" }}>
           Turkish Carpets | Persian Carpets | Silk Carpet | Chinese Carpets
-          Persian
         </p>
         <p style={{ margin: "-5px 0", fontSize: "11px" }}>
-          Plot 1698, Amiun Kano Crescent, Wuse II, Abuja
+          Plot 1698, Aminu Kano Crescent, Wuse II, Abuja
         </p>
-        <div className="flex items-center justify-center gap-1">
-          <FaInstagram />
-          <p style={{ margin: "5px 0", fontSize: "11px", color: "#64748b" }}>
+        <div 
+           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '8px'}}
+        >
+          <FaInstagram size={12} />
+          <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
             Greyandgrema_carpets
           </p>
         </div>
-        <p style={{ margin: "-5px 0", fontSize: "11px" }}>
+        <p style={{ margin: "5px 0", fontSize: "11px" }}>
           08184343338, 08130262533, 08033212840
         </p>
         <div
@@ -145,9 +146,7 @@ const Receipt = React.forwardRef((props, ref) => {
       </div>
 
       {/* Table */}
-      <div style={{ maxHeight: "120mm", overflow: "hidden" }}>
-        {" "}
-        {/* limit table height */}
+      <div style={{ minHeight: "80mm" }}>
         <table
           style={{
             width: "100%",
@@ -158,9 +157,9 @@ const Receipt = React.forwardRef((props, ref) => {
           <thead>
             <tr style={{ borderBottom: "2px solid #1e3a8a" }}>
               <th style={th}>SN</th>
-              <th style={{ ...th, textAlign: "left" }}>PRODUCT DESCRIPTION</th>
+              <th style={{ ...th, textAlign: "left", width: "35%" }}>PRODUCT DESCRIPTION</th>
               <th style={th}>DIMENSIONS</th>
-              <th style={th}>SQM</th>
+              <th style={th}>UNIT/SQM</th>
               <th style={th}>QTY</th>
               <th style={th}>RATE (₦)</th>
               <th style={th}>TOTAL (₦)</th>
@@ -168,9 +167,19 @@ const Receipt = React.forwardRef((props, ref) => {
           </thead>
           <tbody>
             {receiptData?.products?.map((item, index) => {
+              const isSqm = item.pricingType === "sqm";
               const totalSqm = item.dimensions?.totalSquareMeters || 0;
-              const rate =
-                totalSqm > 0 ? item.negotiatedPriceAtSale / totalSqm : 0;
+              const quantity = item.quantitySold || 1;
+              const totalNegotiated = item.negotiatedPriceAtSale || 0;
+
+              let unitRate = 0;
+              if (isSqm) {
+                unitRate = totalSqm > 0 ? (totalNegotiated / (totalSqm * quantity)) : 0;
+                console.log(unitRate)
+              } else {
+                unitRate = totalNegotiated / quantity;
+                console.log(unitRate)
+              }
 
               return (
                 <tr
@@ -181,22 +190,26 @@ const Receipt = React.forwardRef((props, ref) => {
                   }}
                 >
                   <td style={td}>{index + 1}</td>
-                  <td style={{ ...td, textAlign: "left", fontWeight: "bold" }}>
-                    {item.title}
+                  <td style={{ ...td, textAlign: "left" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "11px", marginBottom: "2px" }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: '8px', color: '#64748b', textTransform: 'uppercase' }}>
+                        {isSqm ? 'Measured' : 'Fixed Unit'}
+                    </div>
                   </td>
                   <td style={td}>
-                    {item.dimensions?.length === 0 &&
-                    item.dimensions?.width === 0
-                      ? "-"
-                      : `${item.dimensions?.length}m x ${item.dimensions?.width}m`}
+                    {isSqm 
+                      ? `${item.dimensions?.length}m x ${item.dimensions?.width}m`
+                      : "Fixed Size"}
                   </td>
-                  <td style={td}>{totalSqm.toFixed(2)}</td>
-                  <td style={td}>{item.quantity}</td>
-                  <td style={td}>{rate.toLocaleString()}</td>
+                  <td style={td}>
+                    {isSqm ? `${totalSqm.toFixed(2)} m²` : "1 Unit"}
+                  </td>
+                  <td style={td}>{quantity}</td>
+                  <td style={td}>{unitRate.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
                   <td style={{ ...td, textAlign: "right", fontWeight: "bold" }}>
-                    {(
-                      item.negotiatedPriceAtSale
-                    ).toLocaleString()}
+                    {totalNegotiated.toLocaleString()}
                   </td>
                 </tr>
               );
@@ -215,18 +228,18 @@ const Receipt = React.forwardRef((props, ref) => {
       >
         <div
           style={{
-            width: "280px",
+            width: "300px",
             backgroundColor: "#f8fafc",
             padding: "15px",
             borderRadius: "8px",
           }}
         >
           <div style={sumRow}>
-            <span style={{ color: "#64748b" }}>Gross Amount:</span>
-            <span>₦{receiptData?.subTotal?.toLocaleString()}</span>
+            <span style={{ color: "#64748b" }}>Gross Total:</span>
+            <span style={{ fontWeight: "bold" }}>₦{receiptData?.subTotal?.toLocaleString()}</span>
           </div>
           <div style={{ ...sumRow, color: "#dc2626" }}>
-            <span>Negotiation Discount:</span>
+            <span>Discount/Adjustment:</span>
             <span>- ₦{receiptData?.discountTotal?.toLocaleString()}</span>
           </div>
           <div
@@ -249,8 +262,8 @@ const Receipt = React.forwardRef((props, ref) => {
       {/* Footer / Terms */}
       <div
         style={{
-          marginTop: "20px",
-          padding: "10px",
+          marginTop: "30px",
+          padding: "12px",
           border: "1px dashed #cbd5e1",
           borderRadius: "8px",
           fontSize: "10px",
@@ -259,51 +272,54 @@ const Receipt = React.forwardRef((props, ref) => {
         <h4 style={{ margin: "0 0 5px 0", fontSize: "11px", color: "#1e3a8a" }}>
           TERMS & CONDITIONS:
         </h4>
-        <ul style={{ margin: 0, paddingLeft: "15px", lineHeight: "1.4" }}>
-          <li>
-            Goods sold in good condition are not returnable or exchangeable.
-          </li>
-          <li>This proforma is valid for 24 hours from the date of issue.</li>
-          <li>Kindly ensure measurements are verified before installation.</li>
+        <ul style={{ margin: 0, paddingLeft: "15px", lineHeight: "1.6" }}>
+          <li>Goods sold in good condition are not returnable or exchangeable.</li>
+          <li>Ensure dimensions are verified before payment. Gray & Grema is not liable for measurement errors by third parties.</li>
+          <li>This proforma invoice is valid for 24 hours. Prices are subject to change after validity.</li>
+          <li>Ownership of goods remains with the vendor until full payment is confirmed.</li>
         </ul>
       </div>
 
       {/* Signature */}
       <div
         style={{
-          marginTop: "20px",
+          marginTop: "40px",
           display: "flex",
           justifyContent: "space-between",
         }}
       >
         <div style={sigBox}>
           <div style={sigLine}></div>
-          <p style={{ fontSize: "10px", color: "#64748b" }}>Store Manager</p>
+          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>STORE MANAGER</p>
+          <p style={{ fontSize: "9px", color: "#94a3b8" }}>Authorized Signature</p>
         </div>
         <div style={sigBox}>
           <div style={sigLine}></div>
-          <p style={{ fontSize: "10px", color: "#64748b" }}>
-            Customer Acceptance
-          </p>
+          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>CUSTOMER ACCEPTANCE</p>
+          <p style={{ fontSize: "9px", color: "#94a3b8" }}>Date & Signature</p>
         </div>
+      </div>
+      
+      <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+          <p style={{ fontSize: '9px', color: '#94a3b8' }}>Professional POS System</p>
       </div>
     </div>
   );
 });
 
 const th = {
-  padding: "8px 5px",
+  padding: "10px 5px",
   fontSize: "10px",
   color: "#1e3a8a",
   textTransform: "uppercase",
 };
-const td = { padding: "6px 5px", textAlign: "center", fontSize: "10px" };
+const td = { padding: "8px 5px", textAlign: "center", fontSize: "11px" };
 const sumRow = {
   display: "flex",
   justifyContent: "space-between",
-  marginBottom: "6px",
+  marginBottom: "8px",
 };
-const sigBox = { width: "200px", textAlign: "center" };
-const sigLine = { borderBottom: "1px solid #1e3a8a", marginBottom: "4px" };
+const sigBox = { width: "220px", textAlign: "center" };
+const sigLine = { borderBottom: "1.5px solid #1e3a8a", marginBottom: "6px" };
 
 export default Receipt;

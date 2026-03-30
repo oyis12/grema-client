@@ -1,5 +1,7 @@
+
+
 import React, { useState, useEffect, useRef } from "react";
-import { Button, Modal, Card, message, Input, Divider, Popconfirm } from "antd";
+import { Button, Modal, Card, message, Input, Divider, Popconfirm, Tag } from "antd";
 import { IoAdd, IoCloseOutline } from "react-icons/io5";
 import { RiSubtractFill } from "react-icons/ri";
 import { useReactToPrint } from "react-to-print";
@@ -24,7 +26,6 @@ const Store = () => {
   const receiptRef = useRef();
   const [searchTerm, setSearchTerm] = useState("");
   const [receiptData, setReceiptData] = useState(null);
-  const [selectedSize, setSelecedSize] = useState(null);
 
   const fetchProducts = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -32,7 +33,6 @@ const Store = () => {
       const { data } = await axios.get(`${baseUrl}/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // console.log(data)
       setProducts(data.products || []);
     } catch (error) {
       messageApi.error("Failed to fetch products.");
@@ -45,38 +45,16 @@ const Store = () => {
     if (token) fetchProducts();
   }, [baseUrl, token]);
 
-  // const handleProductClick = (product) => {
-  //   console.log(product)
-  //   const index = cart.findIndex((item) => item._id === product._id);
-  //   setSelecedSize(product?.size)
-  //   if (index !== -1) {
-  //     const updatedCart = [...cart];
-  //     updatedCart[index].quantity += 1;
-  //     setCart(updatedCart);
-  //   } else {
-  //     setCart([
-  //       ...cart,
-  //       {
-  //         ...product,
-  //         quantity: 1,
-  //         length: 0,
-  //         width: 0,
-  //         negotiatedPrice: product.pricePerSquareMeter,
-  //       },
-  //     ]);
-  //   }
-  // };
-
   const handleProductClick = (product) => {
     const index = cart.findIndex((item) => item._id === product._id);
 
-    // 1. Parse dimensions if they exist (e.g., "1.6m x 2.3m")
+    // Parse dimensions if they exist (e.g., "1.6mx2.3m")
     let initialLength = 0;
     let initialWidth = 0;
 
-    if (product.size && product.size.includes("x")) {
-      const dimensions = product.size.split("x").map(
-        (dim) => dim.replace(/[^\d.]/g, "").trim(), // Removes 'm' and any non-numeric chars
+    if (product.size && product.size.toLowerCase().includes("x")) {
+      const dimensions = product.size.split(/x/i).map(
+        (dim) => dim.replace(/[^\d.]/g, "").trim()
       );
       initialLength = Number(dimensions[0]) || 0;
       initialWidth = Number(dimensions[1]) || 0;
@@ -92,10 +70,10 @@ const Store = () => {
         {
           ...product,
           quantity: 1,
-          // 2. Apply parsed dimensions or default to 0
           length: initialLength,
           width: initialWidth,
-          negotiatedPrice: product.pricePerSquareMeter,
+          // Use new 'price' field
+          negotiatedPrice: product.price || 0, 
         },
       ]);
     }
@@ -105,6 +83,16 @@ const Store = () => {
     const updatedCart = [...cart];
     updatedCart[index][field] = value === "" ? "" : Number(value);
     setCart(updatedCart);
+  };
+
+  const calculateItemTotal = (item) => {
+    if (item.pricingType === "sqm") {
+      // Total = Length * Width * Negotiated Price * Quantity
+      return (item.length || 0) * (item.width || 0) * (item.negotiatedPrice || 0) * (item.quantity || 1);
+    } else {
+      // Fixed: Total = Negotiated Price * Quantity
+      return (item.negotiatedPrice || 0) * (item.quantity || 1);
+    }
   };
 
   const logReceipt = async () => {
@@ -121,6 +109,7 @@ const Store = () => {
           length: Number(item.length) || 0,
           width: Number(item.width) || 0,
           negotiatedPrice: Number(item.negotiatedPrice) || 0,
+          pricingType: item.pricingType // Explicitly passing type for backend calcs
         })),
         customerName: customerName || "Walking Customer",
         customerPhone: customerPhone || "N/A",
@@ -176,15 +165,15 @@ const Store = () => {
       {contextHolder}
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Products */}
+        {/* Products List */}
         <div className="lg:w-2/3 w-full">
           <Input
-            placeholder="Search rugs..."
+            placeholder="Search rugs by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             size="large"
             allowClear
-            className="mb-5"
+            className="mb-5 shadow-sm"
           />
 
           {loading ? (
@@ -204,36 +193,44 @@ const Store = () => {
                     onClick={() =>
                       product.quantity > 0 && handleProductClick(product)
                     }
-                    className={`rounded-xl transition-all ${
-                      product.quantity === 0 ? "opacity-50" : ""
+                    className={`rounded-xl transition-all border-none shadow-sm ${
+                      product.quantity === 0 ? "opacity-50 grayscale cursor-not-allowed" : "hover:shadow-md"
                     }`}
                     cover={
-                      <img
-                        alt="product"
-                        src={product.image || product_default}
-                        className="h-36 object-contain p-2"
-                      />
+                      <div className="bg-gray-50 rounded-t-xl p-2 h-36 flex items-center justify-center relative">
+                         {/* {product.quantity <= 5 && product.quantity > 0 && (
+                            <span className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                               Low Stock
+                            </span>
+                         )} */}
+                        <img
+                          alt="product"
+                          src={product.image || product_default}
+                          className="h-full object-contain"
+                        />
+                      </div>
                     }
                   >
-                    {product?.size === "undefined" ? (
-                      ""
-                    ) : (
-                      <div className="font-bold">
-                        Size:{" "}
-                        <sapn className="text-red-600!">{product.size}</sapn>
+                    <div className="space-y-1">
+                      <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+                        {product.category?.name || "Uncategorized"}
                       </div>
-                    )}
-                    <div className="font-semibold text-sm truncate">
-                      {product.title}
-                    </div>
+                      <div className="font-bold text-sm truncate" title={product.title}>
+                        {product.title}
+                      </div>
 
-                    <div className="text-blue-600 font-bold text-sm mt-1">
-                      ₦{product.pricePerSquareMeter?.toLocaleString()}
-                      {product?.size.includes("x") || product.size === "undefined" ? "" : "/m²"}
-                    </div>
+                      <div className="flex flex-wrap gap-1 items-center">
+                        <span className="text-blue-600 font-extrabold text-sm">
+                          ₦{(product.price || 0).toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {product.pricingType === "sqm" ? "/m²" : "/unit"}
+                        </span>
+                      </div>
 
-                    <div className="font-bold">
-                      Type: {product?.category?.name}
+                      <div className="text-[11px] font-medium text-gray-600">
+                        Size: <span className="text-black">{product.size || "N/A"}</span>
+                      </div>
                     </div>
                   </Card>
                 ))}
@@ -241,87 +238,107 @@ const Store = () => {
           )}
         </div>
 
-        {/* Cart */}
+        {/* Checkout Cart Section */}
         <div className="lg:w-1/3 w-full">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 sticky top-6">
-            <h2 className="text-lg font-semibold mb-4">Checkout Cart</h2>
+            <h2 className="text-lg font-bold mb-4 flex justify-between items-center">
+              Cart Items
+              <Tag color="blue">{cart.length}</Tag>
+            </h2>
 
             <div className="space-y-3 mb-4">
               <Input
                 placeholder="Customer Name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="mb-3!"
+                className="rounded-md"
               />
-
               <Input
                 placeholder="Phone Number"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
+                className="rounded-md"
               />
             </div>
 
             <Divider className="my-3" />
 
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
+              {cart.length === 0 && (
+                <div className="text-center py-10 text-gray-400 text-sm">
+                  Cart is empty. Click a product to add.
+                </div>
+              )}
               {cart.map((item, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                  className="border border-gray-100 rounded-lg p-3 bg-gray-50 relative group"
                 >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold truncate w-4/5">
-                      {item.title}
-                    </span>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <div className="text-xs font-bold text-gray-800 leading-tight">
+                            {item.title}
+                        </div>
+                        <div className="text-[10px] text-blue-600 uppercase">
+                            {item.pricingType === 'sqm' ? 'Measured (SQM)' : 'Fixed Unit'}
+                        </div>
+                    </div>
 
                     <IoCloseOutline
-                      className="text-red-500 cursor-pointer text-lg"
+                      className="text-gray-400 hover:text-red-500 cursor-pointer text-lg transition-colors"
                       onClick={() =>
                         setCart(cart.filter((_, i) => i !== index))
                       }
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      type="number"
-                      size="small"
-                      /* Only readOnly if a valid size exists */
-                      readOnly={item.size && item.size !== "undefined"}
-                      value={item.length}
-                      onChange={(e) =>
-                        updateCartItem(index, "length", e.target.value)
-                      }
-                      placeholder="Length"
-                    />
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div className="flex flex-col">
+                        <label className="text-[9px] text-gray-500 ml-1">L (m)</label>
+                        <Input
+                        type="number"
+                        size="small"
+                        disabled={item.pricingType === "fixed"}
+                        value={item.length}
+                        onChange={(e) =>
+                            updateCartItem(index, "length", e.target.value)
+                        }
+                        className="!text-xs"
+                        />
+                    </div>
 
-                    <Input
-                      type="number"
-                      size="small"
-                      /* Only readOnly if a valid size exists */
-                      readOnly={item.size && item.size !== "undefined"}
-                      value={item.width}
-                      onChange={(e) =>
-                        updateCartItem(index, "width", e.target.value)
-                      }
-                      placeholder="Width"
-                    />
+                    <div className="flex flex-col">
+                        <label className="text-[9px] text-gray-500 ml-1">W (m)</label>
+                        <Input
+                        type="number"
+                        size="small"
+                        disabled={item.pricingType === "fixed"}
+                        value={item.width}
+                        onChange={(e) =>
+                            updateCartItem(index, "width", e.target.value)
+                        }
+                        className="!text-xs"
+                        />
+                    </div>
 
-                    <Input
-                      type="number"
-                      size="small"
-                      value={item.negotiatedPrice}
-                      onChange={(e) =>
-                        updateCartItem(index, "negotiatedPrice", e.target.value)
-                      }
-                      placeholder="Rate"
-                    />
+                    <div className="flex flex-col">
+                        <label className="text-[9px] text-gray-500 ml-1">Rate (₦)</label>
+                        <Input
+                        type="number"
+                        size="small"
+                        value={item.negotiatedPrice}
+                        onChange={(e) =>
+                            updateCartItem(index, "negotiatedPrice", e.target.value)
+                        }
+                        className="!text-xs font-bold"
+                        />
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200/50">
+                    <div className="flex items-center gap-2">
                       <button
-                        className="w-8 h-8 flex items-center justify-center rounded-md bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition"
+                        className="w-7 h-7 flex items-center justify-center rounded bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 transition"
                         onClick={() =>
                           updateCartItem(
                             index,
@@ -330,47 +347,52 @@ const Store = () => {
                           )
                         }
                       >
-                        <RiSubtractFill size={16} />
+                        <RiSubtractFill size={14} />
                       </button>
 
-                      <span className="min-w-[28px] text-center font-semibold text-sm">
+                      <span className="min-w-[20px] text-center font-bold text-xs text-gray-700">
                         {item.quantity}
                       </span>
 
                       <button
-                        className="w-8 h-8 flex items-center justify-center rounded-md bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100 transition"
+                        className="w-7 h-7 flex items-center justify-center rounded bg-white border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition"
                         onClick={() =>
                           updateCartItem(index, "quantity", item.quantity + 1)
                         }
                       >
-                        <IoAdd size={16} />
+                        <IoAdd size={14} />
                       </button>
                     </div>
 
-                    <span className="text-xs font-bold text-blue-700">
-                      ₦
-                      {(
-                        // item.length *
-                        // item.width *
-                        item.negotiatedPrice *
-                        item.quantity
-                      ).toLocaleString()}
-                    </span>
+                    <div className="text-right">
+                        <div className="text-[10px] text-gray-400">Subtotal</div>
+                        <div className="text-xs font-bold text-blue-700">
+                        ₦{calculateItemTotal(item).toLocaleString()}
+                        </div>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <Button
-              type="primary"
-              block
-              size="large"
-              className="mt-6 h-12 bg-blue-600"
-              onClick={logReceipt}
-              disabled={cart.length === 0}
-            >
-              Preview & Generate
-            </Button>
+            <div className="mt-6 space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">Total Amount:</span>
+                    <span className="font-bold text-lg text-black">
+                        ₦{cart.reduce((sum, item) => sum + calculateItemTotal(item), 0).toLocaleString()}
+                    </span>
+                </div>
+                <Button
+                    type="primary"
+                    block
+                    size="large"
+                    className="h-12 bg-black hover:!bg-gray-800 border-none font-bold shadow-lg"
+                    onClick={logReceipt}
+                    disabled={cart.length === 0}
+                >
+                    Proceed to Payment
+                </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -381,20 +403,20 @@ const Store = () => {
         onCancel={() => setIsModalVisible(false)}
         width={900}
         footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)}>
-            Cancel
+          <Button key="close" onClick={() => setIsModalVisible(false)} className="rounded-md">
+            Back to Cart
           </Button>,
 
           <Popconfirm
             key="confirm"
-            title="Confirm Payment"
-            description="Has the customer completed the payment?"
-            okText="Yes, Payment Received"
-            cancelText="No"
+            title="Confirm Transaction"
+            description="Is payment confirmed?"
+            okText="Yes, Finalize Sale"
+            cancelText="Wait"
             onConfirm={handlePrint}
           >
-            <Button type="primary" className="bg-blue-600" loading={loading}>
-              Complete Sale & Print
+            <Button type="primary" className="bg-blue-600 rounded-md font-bold" loading={loading}>
+              Print Receipt & Close
             </Button>
           </Popconfirm>,
         ]}
