@@ -86,6 +86,13 @@ const Store = () => {
     }
   };
 
+  // Check if any SQM item has missing or zero dimensions
+  const isInvalidCart = cart.some(
+    (item) =>
+      item.pricingType === "sqm" &&
+      (Number(item.length) <= 0 || Number(item.width) <= 0),
+  );
+
   const updateCartItem = (index, field, value) => {
     const updatedCart = [...cart];
     updatedCart[index][field] = value === "" ? "" : Number(value);
@@ -224,7 +231,7 @@ const Store = () => {
                         <img
                           alt="product"
                           src={product.image || product_default}
-                          className="h-full object-contain"
+                          className="h-full object-cover w-fill"
                         />
                       </div>
                     }
@@ -325,12 +332,18 @@ const Store = () => {
                       </label>
                       <Input
                         type="number"
-                        // size="small"
+                        min="0" // Stops the UI arrows from going below 0
                         disabled={item.pricingType === "fixed"}
-                        value={item.length}
-                        onChange={(e) =>
-                          updateCartItem(index, "length", e.target.value)
-                        }
+                        value={item.length ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+
+                          // BLOCK NEGATIVES: If the user types '-' or a number < 0,
+                          // we stop the function here so updateCartItem never runs.
+                          if (val !== "" && parseFloat(val) < 0) return;
+
+                          updateCartItem(index, "length", val);
+                        }}
                         className="!text-xs"
                       />
                     </div>
@@ -341,12 +354,17 @@ const Store = () => {
                       </label>
                       <Input
                         type="number"
-                        // size="small"
+                        min="0"
                         disabled={item.pricingType === "fixed"}
-                        value={item.width}
-                        onChange={(e) =>
-                          updateCartItem(index, "width", e.target.value)
-                        }
+                        value={item.width ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+
+                          // BLOCK NEGATIVES
+                          if (val !== "" && parseFloat(val) < 0) return;
+
+                          updateCartItem(index, "width", val);
+                        }}
                         className="!text-xs"
                       />
                     </div>
@@ -422,15 +440,16 @@ const Store = () => {
                 </span>
               </div>
               <Button
-                type="primary"
-                block
-                size="large"
-                className="h-12 border-none font-bold shadow-lg"
-                onClick={logReceipt}
-                disabled={cart.length === 0}
-              >
-                Proceed to Payment
-              </Button>
+  type="primary"
+  block
+  size="large"
+  className="h-12 border-none font-bold shadow-lg"
+  onClick={logReceipt}
+  // Disabled if: Cart is empty OR there's an invalid dimension
+  disabled={cart.length === 0 || isInvalidCart}
+>
+  Proceed to Payment
+</Button>
             </div>
           </div>
         </div>

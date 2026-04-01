@@ -7,7 +7,7 @@ const Receipt = React.forwardRef((props, ref) => {
   const { user } = useAuthConfig();
 
   // console.log(receiptData);
-  // console.log(product);
+  console.log(product);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -228,7 +228,7 @@ const Receipt = React.forwardRef((props, ref) => {
                   <td style={td}>
                     {product[index]?.pricingType === "sqm"
                       ? `${item.dimensions?.length}m x ${item.dimensions?.width}m`
-                      : "Fixed Size"}
+                      :  `${product[index]?.size} (Fixed)`}
                   </td>
                   <td style={td}>
                     {product[index]?.pricingType === "sqm"
