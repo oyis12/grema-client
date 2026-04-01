@@ -1,12 +1,13 @@
-
-
 import React from "react";
 import { useAuthConfig } from "../../context/AppState";
 import { FaInstagram } from "react-icons/fa";
 
 const Receipt = React.forwardRef((props, ref) => {
-  const { receiptNumber, receiptData } = props;
+  const { receiptNumber, receiptData, product } = props;
   const { user } = useAuthConfig();
+
+  // console.log(receiptData);
+  // console.log(product);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -49,7 +50,7 @@ const Receipt = React.forwardRef((props, ref) => {
             zIndex: 0,
           }}
         >
-          {receiptData?.shop?.name || "AUTHENTIC"}
+          {receiptData?.shop?.name || "GREY AND GREMA"}
         </h2>
         <h1
           style={{
@@ -70,8 +71,14 @@ const Receipt = React.forwardRef((props, ref) => {
         <p style={{ margin: "-5px 0", fontSize: "11px" }}>
           Plot 1698, Aminu Kano Crescent, Wuse II, Abuja
         </p>
-        <div 
-           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '8px'}}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+            marginTop: "8px",
+          }}
         >
           <FaInstagram size={12} />
           <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
@@ -124,7 +131,14 @@ const Receipt = React.forwardRef((props, ref) => {
           >
             Bill To:
           </h4>
-          <p style={{ margin: 0, fontWeight: "bold", fontSize: "14px" }}>
+          <p
+            style={{
+              margin: 0,
+              fontWeight: "bold",
+              fontSize: "14px",
+              textTransform: "capitalize",
+            }}
+          >
             {receiptData?.customerName || "Walking Customer"}
           </p>
           <p style={{ margin: "2px 0 0 0", color: "#475569" }}>
@@ -157,7 +171,9 @@ const Receipt = React.forwardRef((props, ref) => {
           <thead>
             <tr style={{ borderBottom: "2px solid #1e3a8a" }}>
               <th style={th}>SN</th>
-              <th style={{ ...th, textAlign: "left", width: "35%" }}>PRODUCT DESCRIPTION</th>
+              <th style={{ ...th, textAlign: "left", width: "35%" }}>
+                PRODUCT DESCRIPTION
+              </th>
               <th style={th}>DIMENSIONS</th>
               <th style={th}>UNIT/SQM</th>
               <th style={th}>QTY</th>
@@ -174,11 +190,13 @@ const Receipt = React.forwardRef((props, ref) => {
 
               let unitRate = 0;
               if (isSqm) {
-                unitRate = totalSqm > 0 ? (totalNegotiated / (totalSqm * quantity)) : 0;
-                console.log(unitRate)
+                unitRate =
+                  totalSqm > 0 ? totalNegotiated / (totalSqm * quantity) : 0;
+                // console.log("isSqm:", isSqm);
+                // console.log("unitRate:", unitRate);
               } else {
                 unitRate = totalNegotiated / quantity;
-                console.log(unitRate)
+                // console.log("unitRate:", unitRate);
               }
 
               return (
@@ -191,25 +209,55 @@ const Receipt = React.forwardRef((props, ref) => {
                 >
                   <td style={td}>{index + 1}</td>
                   <td style={{ ...td, textAlign: "left" }}>
-                    <div style={{ fontWeight: "bold", fontSize: "11px", marginBottom: "2px" }}>
-                      {item.title}
+                    <div
+                      style={{
+                        // display: "flex",
+                        // flexDirection: "column", // Stacks children vertically
+                        fontWeight: "bold",
+                        fontSize: "11px",
+                        textTransform: "capitalize",
+                        // marginBottom: "2px",
+                      }}
+                    >
+                      {product[index]?.title}
                     </div>
-                    <div style={{ fontSize: '8px', color: '#64748b', textTransform: 'uppercase' }}>
+                    {/* <div style={{ fontSize: '8px', color: '#64748b', textTransform: 'uppercase' }}>
                         {isSqm ? 'Measured' : 'Fixed Unit'}
-                    </div>
+                    </div> */}
                   </td>
                   <td style={td}>
-                    {isSqm 
+                    {product[index]?.pricingType === "sqm"
                       ? `${item.dimensions?.length}m x ${item.dimensions?.width}m`
                       : "Fixed Size"}
                   </td>
                   <td style={td}>
-                    {isSqm ? `${totalSqm.toFixed(2)} m²` : "1 Unit"}
+                    {product[index]?.pricingType === "sqm"
+                      ? `${totalSqm.toFixed(2)} m²`
+                      : "1 Unit"}
                   </td>
-                  <td style={td}>{quantity}</td>
-                  <td style={td}>{unitRate.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
+                  <td style={td}>{product[index]?.quantity || 1}</td>
+                  <td style={td}>
+                    {product[index]?.negotiatedPrice !== product[index]?.price
+                      ? product[index]?.negotiatedPrice
+                      : product[index]?.price}
+                  </td>
                   <td style={{ ...td, textAlign: "right", fontWeight: "bold" }}>
-                    {totalNegotiated.toLocaleString()}
+                    {(() => {
+                      const p = product[index];
+                      if (!p) return "0";
+
+                      const rate = p.negotiatedPrice; // Use negotiated price as the base
+                      const qty = p.quantity || 1;
+
+                      if (p.pricingType === "fixed") {
+                        // Calculation for Rugs/Fixed items
+                        return (rate * qty).toLocaleString();
+                      } else {
+                        // Calculation for Wall-to-Wall/SQM items: Rate * Width * Length * Qty
+                        const area = (p.width || 0) * (p.length || 0);
+                        return (rate * area * qty).toLocaleString();
+                      }
+                    })()}
                   </td>
                 </tr>
               );
@@ -236,7 +284,9 @@ const Receipt = React.forwardRef((props, ref) => {
         >
           <div style={sumRow}>
             <span style={{ color: "#64748b" }}>Gross Total:</span>
-            <span style={{ fontWeight: "bold" }}>₦{receiptData?.subTotal?.toLocaleString()}</span>
+            <span style={{ fontWeight: "bold" }}>
+              ₦{receiptData?.subTotal?.toLocaleString()}
+            </span>
           </div>
           <div style={{ ...sumRow, color: "#dc2626" }}>
             <span>Discount/Adjustment:</span>
@@ -273,10 +323,21 @@ const Receipt = React.forwardRef((props, ref) => {
           TERMS & CONDITIONS:
         </h4>
         <ul style={{ margin: 0, paddingLeft: "15px", lineHeight: "1.6" }}>
-          <li>Goods sold in good condition are not returnable or exchangeable.</li>
-          <li>Ensure dimensions are verified before payment. Gray & Grema is not liable for measurement errors by third parties.</li>
-          <li>This proforma invoice is valid for 24 hours. Prices are subject to change after validity.</li>
-          <li>Ownership of goods remains with the vendor until full payment is confirmed.</li>
+          <li>
+            Goods sold in good condition are not returnable or exchangeable.
+          </li>
+          <li>
+            Ensure dimensions are verified before payment. Gray & Grema is not
+            liable for measurement errors by third parties.
+          </li>
+          <li>
+            This proforma invoice is valid for 24 hours. Prices are subject to
+            change after validity.
+          </li>
+          <li>
+            Ownership of goods remains with the vendor until full payment is
+            confirmed.
+          </li>
         </ul>
       </div>
 
@@ -290,18 +351,33 @@ const Receipt = React.forwardRef((props, ref) => {
       >
         <div style={sigBox}>
           <div style={sigLine}></div>
-          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>STORE MANAGER</p>
-          <p style={{ fontSize: "9px", color: "#94a3b8" }}>Authorized Signature</p>
+          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>
+            STORE MANAGER
+          </p>
+          <p style={{ fontSize: "9px", color: "#94a3b8" }}>
+            Authorized Signature
+          </p>
         </div>
         <div style={sigBox}>
           <div style={sigLine}></div>
-          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>CUSTOMER ACCEPTANCE</p>
+          <p style={{ fontSize: "10px", color: "#64748b", fontWeight: "bold" }}>
+            CUSTOMER ACCEPTANCE
+          </p>
           <p style={{ fontSize: "9px", color: "#94a3b8" }}>Date & Signature</p>
         </div>
       </div>
-      
-      <div style={{ textAlign: 'center', marginTop: '30px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-          <p style={{ fontSize: '9px', color: '#94a3b8' }}>Professional POS System</p>
+
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: "30px",
+          borderTop: "1px solid #f1f5f9",
+          paddingTop: "10px",
+        }}
+      >
+        <p style={{ fontSize: "9px", color: "#94a3b8" }}>
+          Professional POS System
+        </p>
       </div>
     </div>
   );

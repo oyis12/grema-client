@@ -1,7 +1,14 @@
-
-
 import React, { useState, useEffect, useRef } from "react";
-import { Button, Modal, Card, message, Input, Divider, Popconfirm, Tag } from "antd";
+import {
+  Button,
+  Modal,
+  Card,
+  message,
+  Input,
+  Divider,
+  Popconfirm,
+  Tag,
+} from "antd";
 import { IoAdd, IoCloseOutline } from "react-icons/io5";
 import { RiSubtractFill } from "react-icons/ri";
 import { useReactToPrint } from "react-to-print";
@@ -47,15 +54,15 @@ const Store = () => {
 
   const handleProductClick = (product) => {
     const index = cart.findIndex((item) => item._id === product._id);
-
+    // console.log("selected product", product);
     // Parse dimensions if they exist (e.g., "1.6mx2.3m")
     let initialLength = 0;
     let initialWidth = 0;
 
     if (product.size && product.size.toLowerCase().includes("x")) {
-      const dimensions = product.size.split(/x/i).map(
-        (dim) => dim.replace(/[^\d.]/g, "").trim()
-      );
+      const dimensions = product.size
+        .split(/x/i)
+        .map((dim) => dim.replace(/[^\d.]/g, "").trim());
       initialLength = Number(dimensions[0]) || 0;
       initialWidth = Number(dimensions[1]) || 0;
     }
@@ -73,7 +80,7 @@ const Store = () => {
           length: initialLength,
           width: initialWidth,
           // Use new 'price' field
-          negotiatedPrice: product.price || 0, 
+          negotiatedPrice: product.price || 0,
         },
       ]);
     }
@@ -88,7 +95,12 @@ const Store = () => {
   const calculateItemTotal = (item) => {
     if (item.pricingType === "sqm") {
       // Total = Length * Width * Negotiated Price * Quantity
-      return (item.length || 0) * (item.width || 0) * (item.negotiatedPrice || 0) * (item.quantity || 1);
+      return (
+        (item.length || 0) *
+        (item.width || 0) *
+        (item.negotiatedPrice || 0) *
+        (item.quantity || 1)
+      );
     } else {
       // Fixed: Total = Negotiated Price * Quantity
       return (item.negotiatedPrice || 0) * (item.quantity || 1);
@@ -109,7 +121,8 @@ const Store = () => {
           length: Number(item.length) || 0,
           width: Number(item.width) || 0,
           negotiatedPrice: Number(item.negotiatedPrice) || 0,
-          pricingType: item.pricingType // Explicitly passing type for backend calcs
+          pricingType: item.pricingType,
+          // Explicitly passing type for backend calcs
         })),
         customerName: customerName || "Walking Customer",
         customerPhone: customerPhone || "N/A",
@@ -121,6 +134,7 @@ const Store = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
+      // console.log(data)
       setReceiptData(data.receipt);
       setReceiptId(data.receipt._id);
       setReceiptNumber(data.receipt.receiptCode);
@@ -160,6 +174,8 @@ const Store = () => {
     },
   });
 
+  // console.log("this is the cart items", cart)
+
   return (
     <div className="p-6 min-h-screen">
       {contextHolder}
@@ -194,11 +210,13 @@ const Store = () => {
                       product.quantity > 0 && handleProductClick(product)
                     }
                     className={`rounded-xl transition-all border-none shadow-sm ${
-                      product.quantity === 0 ? "opacity-50 grayscale cursor-not-allowed" : "hover:shadow-md"
+                      product.quantity === 0
+                        ? "opacity-50 grayscale cursor-not-allowed"
+                        : "hover:shadow-md"
                     }`}
                     cover={
                       <div className="bg-gray-50 rounded-t-xl p-2 h-36 flex items-center justify-center relative">
-                         {/* {product.quantity <= 5 && product.quantity > 0 && (
+                        {/* {product.quantity <= 5 && product.quantity > 0 && (
                             <span className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
                                Low Stock
                             </span>
@@ -215,7 +233,10 @@ const Store = () => {
                       <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">
                         {product.category?.name || "Uncategorized"}
                       </div>
-                      <div className="font-bold text-sm truncate" title={product.title}>
+                      <div
+                        className="font-bold text-sm truncate"
+                        title={product.title}
+                      >
                         {product.title}
                       </div>
 
@@ -229,7 +250,10 @@ const Store = () => {
                       </div>
 
                       <div className="text-[11px] font-medium text-gray-600">
-                        Size: <span className="text-black">{product.size || "N/A"}</span>
+                        Size:{" "}
+                        <span className="text-black">
+                          {product.size || "N/A"}
+                        </span>
                       </div>
                     </div>
                   </Card>
@@ -246,7 +270,7 @@ const Store = () => {
               <Tag color="blue">{cart.length}</Tag>
             </h2>
 
-            <div className="space-y-3 mb-4">
+            <div className="!space-y-3  mb-4">
               <Input
                 placeholder="Customer Name"
                 value={customerName}
@@ -276,12 +300,14 @@ const Store = () => {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                        <div className="text-xs font-bold text-gray-800 leading-tight">
-                            {item.title}
-                        </div>
-                        <div className="text-[10px] text-blue-600 uppercase">
-                            {item.pricingType === 'sqm' ? 'Measured (SQM)' : 'Fixed Unit'}
-                        </div>
+                      <div className="text-xs font-bold text-gray-800 leading-tight">
+                        {item.title}
+                      </div>
+                      <div className="text-[10px] text-blue-600 uppercase">
+                        {item.pricingType === "sqm"
+                          ? "Measured (SQM)"
+                          : "Fixed Unit"}
+                      </div>
                     </div>
 
                     <IoCloseOutline
@@ -294,44 +320,54 @@ const Store = () => {
 
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <div className="flex flex-col">
-                        <label className="text-[9px] text-gray-500 ml-1">L (m)</label>
-                        <Input
+                      <label className="text-[9px] text-gray-500 ml-1">
+                        L (m)
+                      </label>
+                      <Input
                         type="number"
-                        size="small"
+                        // size="small"
                         disabled={item.pricingType === "fixed"}
                         value={item.length}
                         onChange={(e) =>
-                            updateCartItem(index, "length", e.target.value)
+                          updateCartItem(index, "length", e.target.value)
                         }
                         className="!text-xs"
-                        />
+                      />
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="text-[9px] text-gray-500 ml-1">W (m)</label>
-                        <Input
+                      <label className="text-[9px] text-gray-500 ml-1">
+                        W (m)
+                      </label>
+                      <Input
                         type="number"
-                        size="small"
+                        // size="small"
                         disabled={item.pricingType === "fixed"}
                         value={item.width}
                         onChange={(e) =>
-                            updateCartItem(index, "width", e.target.value)
+                          updateCartItem(index, "width", e.target.value)
                         }
                         className="!text-xs"
-                        />
+                      />
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="text-[9px] text-gray-500 ml-1">Rate (₦)</label>
-                        <Input
+                      <label className="text-[9px] text-gray-500 ml-1">
+                        Rate (₦)
+                      </label>
+                      <Input
                         type="number"
-                        size="small"
+                        // size="small"
                         value={item.negotiatedPrice}
                         onChange={(e) =>
-                            updateCartItem(index, "negotiatedPrice", e.target.value)
+                          updateCartItem(
+                            index,
+                            "negotiatedPrice",
+                            e.target.value,
+                          )
                         }
                         className="!text-xs font-bold"
-                        />
+                      />
                     </div>
                   </div>
 
@@ -365,10 +401,10 @@ const Store = () => {
                     </div>
 
                     <div className="text-right">
-                        <div className="text-[10px] text-gray-400">Subtotal</div>
-                        <div className="text-xs font-bold text-blue-700">
+                      <div className="text-[10px] text-gray-400">Subtotal</div>
+                      <div className="text-xs font-bold text-blue-700">
                         ₦{calculateItemTotal(item).toLocaleString()}
-                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -376,22 +412,25 @@ const Store = () => {
             </div>
 
             <div className="mt-6 space-y-2">
-                <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Total Amount:</span>
-                    <span className="font-bold text-lg text-black">
-                        ₦{cart.reduce((sum, item) => sum + calculateItemTotal(item), 0).toLocaleString()}
-                    </span>
-                </div>
-                <Button
-                    type="primary"
-                    block
-                    size="large"
-                    className="h-12 bg-black hover:!bg-gray-800 border-none font-bold shadow-lg"
-                    onClick={logReceipt}
-                    disabled={cart.length === 0}
-                >
-                    Proceed to Payment
-                </Button>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Total Amount:</span>
+                <span className="font-bold text-lg text-black">
+                  ₦
+                  {cart
+                    .reduce((sum, item) => sum + calculateItemTotal(item), 0)
+                    .toLocaleString()}
+                </span>
+              </div>
+              <Button
+                type="primary"
+                block
+                size="large"
+                className="h-12 border-none font-bold shadow-lg"
+                onClick={logReceipt}
+                disabled={cart.length === 0}
+              >
+                Proceed to Payment
+              </Button>
             </div>
           </div>
         </div>
@@ -403,7 +442,11 @@ const Store = () => {
         onCancel={() => setIsModalVisible(false)}
         width={900}
         footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)} className="rounded-md">
+          <Button
+            key="close"
+            onClick={() => setIsModalVisible(false)}
+            className="rounded-md"
+          >
             Back to Cart
           </Button>,
 
@@ -415,7 +458,11 @@ const Store = () => {
             cancelText="Wait"
             onConfirm={handlePrint}
           >
-            <Button type="primary" className="bg-blue-600 rounded-md font-bold" loading={loading}>
+            <Button
+              type="primary"
+              className="bg-blue-600 rounded-md font-bold"
+              loading={loading}
+            >
               Print Receipt & Close
             </Button>
           </Popconfirm>,
@@ -430,6 +477,7 @@ const Store = () => {
             ref={receiptRef}
             receiptData={receiptData}
             receiptNumber={receiptNumber}
+            product={cart}
           />
         )}
       </Modal>
