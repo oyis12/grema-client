@@ -7,7 +7,7 @@ const Receipt = React.forwardRef((props, ref) => {
   const { user } = useAuthConfig();
 
   // console.log(receiptData);
-  console.log(product);
+  // console.log(receiptData);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -181,88 +181,77 @@ const Receipt = React.forwardRef((props, ref) => {
               <th style={th}>TOTAL (₦)</th>
             </tr>
           </thead>
-          <tbody>
-            {receiptData?.products?.map((item, index) => {
-              const isSqm = item.pricingType === "sqm";
-              const totalSqm = item.dimensions?.totalSquareMeters || 0;
-              const quantity = item.quantitySold || 1;
-              const totalNegotiated = item.negotiatedPriceAtSale || 0;
+        <tbody>
+  {receiptData?.enrichedProducts?.map((item, index) => {
+    const isSqm = item.pricingType === "sqm";
+    const totalSqm = item.dimensions?.totalSquareMeters || 0;
+    const quantity = item.quantitySold || 1;
+    const totalNegotiated = item.negotiatedPriceAtSale || 0;
 
-              let unitRate = 0;
-              if (isSqm) {
-                unitRate =
-                  totalSqm > 0 ? totalNegotiated / (totalSqm * quantity) : 0;
-                // console.log("isSqm:", isSqm);
-                // console.log("unitRate:", unitRate);
-              } else {
-                unitRate = totalNegotiated / quantity;
-                // console.log("unitRate:", unitRate);
-              }
+    let unitRate = 0;
 
-              return (
-                <tr
-                  key={index}
-                  style={{
-                    borderBottom: "1px solid #f1f5f9",
-                    pageBreakInside: "avoid",
-                  }}
-                >
-                  <td style={td}>{index + 1}</td>
-                  <td style={{ ...td, textAlign: "left" }}>
-                    <div
-                      style={{
-                        // display: "flex",
-                        // flexDirection: "column", // Stacks children vertically
-                        fontWeight: "bold",
-                        fontSize: "11px",
-                        textTransform: "capitalize",
-                        // marginBottom: "2px",
-                      }}
-                    >
-                      {product[index]?.title}
-                    </div>
-                    {/* <div style={{ fontSize: '8px', color: '#64748b', textTransform: 'uppercase' }}>
-                        {isSqm ? 'Measured' : 'Fixed Unit'}
-                    </div> */}
-                  </td>
-                  <td style={td}>
-                    {product[index]?.pricingType === "sqm"
-                      ? `${item.dimensions?.length}m x ${item.dimensions?.width}m`
-                      :  `${product[index]?.size} (Fixed)`}
-                  </td>
-                  <td style={td}>
-                    {product[index]?.pricingType === "sqm"
-                      ? `${totalSqm.toFixed(2)} m²`
-                      : "1 Unit"}
-                  </td>
-                  <td style={td}>{product[index]?.quantity || 1}</td>
-                  <td style={td}>
-                    {product[index]?.negotiatedPrice !== product[index]?.price
-                      ? product[index]?.negotiatedPrice
-                      : product[index]?.price}
-                  </td>
-                  <td style={{ ...td, textAlign: "right", fontWeight: "bold" }}>
-                    {(() => {
-                      const p = product[index];
-                      if (!p) return "0";
+    if (isSqm) {
+      unitRate =
+        totalSqm > 0
+          ? totalNegotiated / (totalSqm * quantity)
+          : 0;
+    } else {
+      unitRate = totalNegotiated / quantity;
+    }
 
-                      const rate = p.negotiatedPrice; // Use negotiated price as the base
-                      const qty = p.quantity || 1;
+    return (
+      <tr
+        key={index}
+        style={{
+          borderBottom: "1px solid #f1f5f9",
+          pageBreakInside: "avoid",
+        }}
+      >
+        <td style={td}>{index + 1}</td>
 
-                      if (p.pricingType === "fixed") {
-                        // Calculation for Rugs/Fixed items
-                        return (rate * qty).toLocaleString();
-                      } else {
-                        // Calculation for Wall-to-Wall/SQM items: Rate * Width * Length * Qty
-                        const area = (p.width || 0) * (p.length || 0);
-                        return (rate * area * qty).toLocaleString();
-                      }
-                    })()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+        <td style={{ ...td, textAlign: "left" }}>
+          <div
+            style={{
+              fontWeight: "bold",
+              fontSize: "11px",
+              textTransform: "capitalize",
+            }}
+          >
+            {item.title}
+          </div>
+        </td>
+
+        <td style={td}>
+          {isSqm
+            ? `${item.dimensions?.length}m x ${item.dimensions?.width}m`
+            : `${item.size || "N/A"} (Fixed)`}
+        </td>
+
+        <td style={td}>
+          {isSqm
+            ? `${totalSqm.toFixed(2)} m²`
+            : "1 Unit"}
+        </td>
+
+        <td style={td}>{quantity}</td>
+
+        <td style={td}>
+          ₦{unitRate.toLocaleString()}
+        </td>
+
+        <td
+          style={{
+            ...td,
+            textAlign: "right",
+            fontWeight: "bold",
+          }}
+        >
+          ₦{totalNegotiated.toLocaleString()}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
         </table>
       </div>
 

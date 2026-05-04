@@ -59,6 +59,8 @@ const Dashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log(response)
+
       const data = response.data;
       setSummary(data.monthlySummary || {});
       setSalesTrends(data.salesTrends || []);
