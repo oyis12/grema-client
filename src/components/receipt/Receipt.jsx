@@ -9,7 +9,7 @@ const Receipt = React.forwardRef((props, ref) => {
   // console.log(receiptData);
   console.log("data: ",product);
 
-  // console.log(receiptData);
+  console.log(receiptData);
 
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
