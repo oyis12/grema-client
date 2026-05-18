@@ -141,7 +141,7 @@ const Store = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      // console.log(data)
+      console.log(data)
       setReceiptData(data.receipt);
       setReceiptId(data.receipt._id);
       setReceiptNumber(data.receipt.receiptCode);
