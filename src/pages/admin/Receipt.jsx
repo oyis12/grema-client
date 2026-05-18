@@ -45,6 +45,7 @@ const ReceiptSearch = () => {
   /* ---------------- SEARCH RECEIPT ---------------- */
 
   const onFinish = async ({ receiptId }) => {
+    console.log(receiptId)
     setSearchLoading(true);
 
     try {
@@ -52,6 +53,8 @@ const ReceiptSearch = () => {
         `${baseUrl}/receipts/search?receiptCode=${receiptId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // console.log(response);
 
       const receipt = response.data.receipt;
 
@@ -69,6 +72,7 @@ const ReceiptSearch = () => {
         enrichedProducts,
       };
 
+      //  console.log(enrichedReceipt);
       setReceiptData(enrichedReceipt);
       setIsModalVisible(true);
 
